@@ -35,7 +35,7 @@ using namespace std::string_literals;
 struct AWarpData final {
     VSNode* node, * mask;
     const VSVideoInfo* vi;
-    int depth[3];
+    int depth_h[3], depth_v[3];
     bool process[3];
     int SMAGL, SMAG, peak;
     void (*filter)(const VSFrame* src, const VSFrame* mask, VSFrame* dst, const AWarpData* VS_RESTRICT d, const VSAPI* vsapi) noexcept;
@@ -56,16 +56,14 @@ static void filter(const VSFrame* src, const VSFrame* mask, VSFrame* dst, const 
             auto maskp = reinterpret_cast<const pixel_t*>(vsapi->getReadPtr(mask, plane));
             pixel_t* VS_RESTRICT dstp = reinterpret_cast<pixel_t*>(vsapi->getWritePtr(dst, plane));
 
-            const int depth = d->depth[plane] << (std::is_integral_v<pixel_t> ? 16 - d->vi->format.bitsPerSample : 8);
-
             const int xLimitMax = (width - 1) * d->SMAG;
             int yLimitMin, yLimitMax;
             scalar_t up, down, left, right;
 
             auto warp = [&](const int x) noexcept {
                 if constexpr (std::is_integral_v<pixel_t>) {
-                    int h = (((left - right) << 7) * depth) >> 16;
-                    int v = (((up - down) << 7) * depth) >> 16;
+                    int h = (((left - right) << 7) * d->depth_h[plane]) >> 16;
+                    int v = (((up - down) << 7) * d->depth_v[plane]) >> 16;
 
                     v = std::clamp(v, yLimitMin, yLimitMax);
 
@@ -109,8 +107,8 @@ static void filter(const VSFrame* src, const VSFrame* mask, VSFrame* dst, const 
                     int h = static_cast<int>((left - right) * 255 + 0.5f);
                     int v = static_cast<int>((up - down) * 255 + 0.5f);
 
-                    h = ((h << 7) * depth) >> 16;
-                    v = ((v << 7) * depth) >> 16;
+                    h = ((h << 7) * d->depth_h[plane]) >> 16;
+                    v = ((v << 7) * d->depth_v[plane]) >> 16;
 
                     v = std::clamp(v, yLimitMin, yLimitMax);
 
@@ -252,23 +250,40 @@ static void VS_CC aWarpCreate(const VSMap* in, VSMap* out, [[maybe_unused]] void
         if (d->vi->numFrames != clipVI->numFrames)
             throw "both clips must have the same number of frames"s;
 
-        if (vsapi->mapNumElements(in, "depth") > d->vi->format.numPlanes)
-            throw "depth has more values specified than there are planes"s;
+        const int numDepthH = vsapi->mapNumElements(in, "depth_h");
+        if (numDepthH > d->vi->format.numPlanes)
+            throw "depth_h has more values specified than there are planes"s;
+
+        const int numDepthV = vsapi->mapNumElements(in, "depth_v");
+        if (numDepthV > d->vi->format.numPlanes)
+            throw "depth_v has more values specified than there are planes"s;
 
         for (int plane = 0; plane < d->vi->format.numPlanes; plane++) {
-            d->depth[plane] = vsapi->mapGetIntSaturated(in, "depth", plane, &err);
+            if (plane < numDepthH)
+                d->depth_h[plane] = vsapi->mapGetIntSaturated(in, "depth_h", plane, nullptr);
+            else if (plane == 0)
+                d->depth_h[0] = 3;
+            else if (plane == 1)
+                d->depth_h[1] = d->depth_h[0] >> d->vi->format.subSamplingW;
+            else
+                d->depth_h[2] = d->depth_h[1];
 
-            if (err) {
-                if (plane == 0)
-                    d->depth[plane] = 3;
-                else if (plane == 1)
-                    d->depth[plane] = d->depth[plane - 1] / (d->vi->format.subSamplingW > 0 || d->vi->format.subSamplingH > 0 ? 2 : 1);
-                else
-                    d->depth[plane] = d->depth[plane - 1];
-            } else {
-                if (d->depth[plane] < -128 || d->depth[plane] > 127)
-                    throw "depth must be between -128 and 127 (inclusive)"s;
-            }
+            if (plane < numDepthV)
+                d->depth_v[plane] = vsapi->mapGetIntSaturated(in, "depth_v", plane, nullptr);
+            else if (plane < numDepthH)
+                d->depth_v[plane] = d->depth_h[plane];
+            else if (plane == 0)
+                d->depth_v[0] = 3;
+            else if (plane == 1)
+                d->depth_v[1] = d->depth_v[0] >> d->vi->format.subSamplingH;
+            else
+                d->depth_v[2] = d->depth_v[1];
+
+            if (d->depth_h[plane] < -128 || d->depth_h[plane] > 127)
+                throw "depth_h must be between -128 and 127 (inclusive)"s;
+
+            if (d->depth_v[plane] < -128 || d->depth_v[plane] > 127)
+                throw "depth_v must be between -128 and 127 (inclusive)"s;
         }
 
         bool mask_first_plane = !!vsapi->mapGetInt(in, "mask_first_plane", 0, &err);
@@ -298,6 +313,11 @@ static void VS_CC aWarpCreate(const VSMap* in, VSMap* out, [[maybe_unused]] void
             d->filter = filter<uint16_t>;
         else
             d->filter = filter<float>;
+
+        for (int plane = 0; plane < d->vi->format.numPlanes; plane++) {
+            d->depth_h[plane] <<= (d->vi->format.sampleType == stInteger) ? 16 - d->vi->format.bitsPerSample : 8;
+            d->depth_v[plane] <<= (d->vi->format.sampleType == stInteger) ? 16 - d->vi->format.bitsPerSample : 8;
+        }
 
         if (mask_first_plane &&
             (d->process[1] || d->process[2]) &&
@@ -385,7 +405,7 @@ VS_EXTERNAL_API(void) VapourSynthPluginInit2(VSPlugin* plugin, const VSPLUGINAPI
                          plugin);
 
     vspapi->registerFunction("AWarp",
-                             "clip:vnode;mask:vnode;depth:int[]:opt;mask_first_plane:int:opt;planes:int[]:opt;",
+                             "clip:vnode;mask:vnode;depth_h:int[]:opt;depth_v:int[]:opt;mask_first_plane:int:opt;planes:int[]:opt;",
                              "clip:vnode;",
                              aWarpCreate,
                              nullptr,
