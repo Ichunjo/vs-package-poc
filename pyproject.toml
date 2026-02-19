@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling", "packaging", "meson"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vapoursynth-awarp"
+description = "AWarp filter for Vapoursynth"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["vapoursynth"]
+dynamic = ["version"]
+
+# Development dependencies to assist with script development and linting
+[dependency-groups]
+dev = ["hatchling", "packaging", "meson", "ruff", "mypy"]
+
+[tool.hatch.version]
+path = "meson.build"
+pattern = "\\Wversion:\\s*'(?P<version>[^']+)'"
+
+[tool.hatch.build.targets.wheel]
+include = ["vapoursynth/plugins"]
+artifacts = [
+    "vapoursynth/plugins/*.dylib",
+    "vapoursynth/plugins/*.so",
+    "vapoursynth/plugins/*.dll",
+]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "hatch_build.py"

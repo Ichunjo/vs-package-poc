@@ -1,31 +1,28 @@
 project('AWarp', 'cpp',
     default_options: ['buildtype=release', 'warning_level=2', 'b_lto=true', 'b_ndebug=if-release', 'cpp_std=c++17'],
     license: 'MIT',
-    meson_version: '>=0.58.0',
+    meson_version: '>=1.10.0',
     version: '2.0',
 )
 
+py = import('python').find_installation()
 cxx = meson.get_compiler('cpp')
 
-gcc_syntax = cxx.get_argument_syntax() == 'gcc'
+add_project_arguments(
+    cxx.get_supported_arguments(['-fno-math-errno', '-fno-trapping-math']),
+    language: 'cpp'
+)
 
-if get_option('buildtype') == 'release'
-    add_project_arguments(gcc_syntax ? ['-fno-math-errno', '-fno-trapping-math'] : '/GS-', language: 'cpp')
-endif
+# Harcode the VS headers for now.
+# Later they could be included in the VS wheel and discoverable via a function
+vs_include = include_directories('include/vapoursynth')
 
-if gcc_syntax
-    vapoursynth_dep = dependency('vapoursynth', version: '>=55').partial_dependency(compile_args: true, includes: true)
-    install_dir = vapoursynth_dep.get_variable('libdir') / 'vapoursynth'
-else
-    vapoursynth_dep = []
-    install_dir = get_option('libdir') / 'vapoursynth'
-endif
 
 shared_module('awarp',
     files('AWarp/awarp.cpp'),
-    dependencies: vapoursynth_dep,
+    include_directories: vs_include,
     gnu_symbol_visibility: 'hidden',
     install: true,
-    install_dir: install_dir,
+    install_dir: py.get_install_dir() / 'vapoursynth' / 'plugins',
     name_prefix: '',
 )
