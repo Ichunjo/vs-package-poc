@@ -5,3 +5,14 @@ zig-out
 .vspreview
 .vsjet
 /build
+
+
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Dist files
+dist
+vapoursynth
