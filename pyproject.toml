@@ -1,0 +1,15 @@
+[build-system]
+requires = ["meson-python", "ninja"]
+build-backend = "mesonpy"
+
+[project]
+name = "vapoursynth-awarp"
+description = "AWarp filter for Vapoursynth"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["vapoursynth"]
+dynamic = ["version"]
+
+[tool.meson-python]
+# https://mesonbuild.com/meson-python/reference/pyproject-settings.html#cmdoption-arg-tool.meson-python.allow-windows-internal-shared-libs
+allow-windows-internal-shared-libs = true
