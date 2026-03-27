@@ -1,0 +1,28 @@
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[[package]]
+name = "vapoursynth"
+version = "74rc2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/65/8a038a943e7116afcc46872f5dd2d1048fa1e2b06795530cf09d26e5b085/vapoursynth-74rc2.tar.gz", hash = "sha256:0b0ced1158cc867dece13cac9a21a44ea94c21c3bad57194f6bc04de9aca6e87", size = 584170, upload-time = "2026-03-25T18:06:16.601Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/08/cd/16f3c17d4ac1ea409c9bc5b5f7dc9e801913393690b9cc36c62ccf1d4ef7/vapoursynth-74rc2-cp312-abi3-macosx_13_0_arm64.whl", hash = "sha256:282a727e303fa96df61fcd3f5fb30bff2c449019e0aea6d4b4dca3fc3fc85281", size = 889309, upload-time = "2026-03-25T18:06:04.424Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/a7/969df4a3079bb58c1caab627a0e28eb33287e4bb3b0eeb662a1c1b0437dc/vapoursynth-74rc2-cp312-abi3-macosx_13_0_x86_64.whl", hash = "sha256:59a17fb9bc430dd720367c97023606572a0238745c5657ded903e45d15bda180", size = 1354271, upload-time = "2026-03-25T18:06:06.49Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/4e/4601b4a0d3c6b103ff543ea326f8ced552e9668d3b0a3cf84197601bb833/vapoursynth-74rc2-cp312-abi3-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d0712449db8c91aab422cab0cc63770153e4fc95bc94462c2cd8754b8f3fb1a9", size = 1608499, upload-time = "2026-03-25T18:06:08.076Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/4a/1b0adab2eb40248d9f132057a0a5a675867303e0c64804203fad33577ecb/vapoursynth-74rc2-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:51602b6edc0b4ed27020ddf0b5ff39f04ada9eaf9123dc7e97d5397b8dc900ff", size = 2276572, upload-time = "2026-03-25T18:06:09.524Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/23/3f390ba7e4a781fb81d1489095cae1e5f2734c6ba3806f44422a991137fe/vapoursynth-74rc2-cp312-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:000bd12f6cca8b5e4a0c172b6eeeeb482a6d84977dbc593588ca593fea4241e0", size = 2149999, upload-time = "2026-03-25T18:06:11.21Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/71/fcf8838cac42711f5719bb6790c175cddc19977c08ed0d835062df6c9e75/vapoursynth-74rc2-cp312-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:7a641d54129317d834c07d5681b5bd205c0b59144e766bb6f2622b43e34cd226", size = 2818395, upload-time = "2026-03-25T18:06:12.706Z" },
+    { url = "https://files.pythonhosted.org/packages/72/6a/e4229646a1704d4e58d9a826a5623d83befeef4f14cc143166dcf97c9e96/vapoursynth-74rc2-cp312-abi3-win_amd64.whl", hash = "sha256:3f169f289206bc20ff30e5d8f8c6d5590f4f735b756053e8e6dba98df815b7f9", size = 6572766, upload-time = "2026-03-25T18:06:14.908Z" },
+]
+
+[[package]]
+name = "vapoursynth-awarp"
+source = { editable = "." }
+dependencies = [
+    { name = "vapoursynth" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "vapoursynth", specifier = ">=74rc2" }]
